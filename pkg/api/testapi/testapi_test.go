@@ -46,6 +46,22 @@ func TestResourcePathWithPrefix(t *testing.T) {
 			t.Errorf("Expected: %s, got: %s for prefix: %s, resource: %s, namespace: %s and name: %s", item.expected, actual, item.prefix, item.resource, item.namespace, item.name)
 		}
 	}
+	Default.externalGroupVersion.Group = "myversion"
+	spcTestCases := []struct {
+		prefix    string
+		resource  string
+		namespace string
+		name      string
+		expected  string
+	}{
+		{"prefix", "resource", "mynamespace", "myresource", "/apis/myversion/v1/prefix/namespaces/mynamespace/resource/myresource"},
+	}
+	for _, item := range spcTestCases {
+		if actual := Default.ResourcePathWithPrefix(item.prefix, item.resource, item.namespace, item.name); actual != item.expected {
+			t.Errorf("Expected: %s, got: %s for prefix: %s, resource: %s, namespace: %s and name: %s", item.expected, actual, item.prefix, item.resource, item.namespace, item.name)
+		}
+	}
+	Default.externalGroupVersion.Group = ""
 }
 
 func TestResourcePath(t *testing.T) {
