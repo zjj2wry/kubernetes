@@ -97,7 +97,7 @@ parameters:
 
   no_proxy:
     type: string
-    description: Comma seperated list of domains/addresses that bypass proxying.
+    description: Comma separated list of domains/addresses that bypass proxying.
     default: localhost
 
   assign_floating_ip:
