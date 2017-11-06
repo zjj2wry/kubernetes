@@ -23,11 +23,11 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
-	"k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/kubectl/cmd/templates"
 	cmdutil "k8s.io/kubernetes/pkg/kubectl/cmd/util"
 	"k8s.io/kubernetes/pkg/kubectl/resource"
@@ -68,7 +68,7 @@ type serviceAccountConfig struct {
 	changeCause            string
 	local                  bool
 	saPrint                func(obj runtime.Object) error
-	updatePodSpecForObject func(runtime.Object, func(*api.PodSpec) error) (bool, error)
+	updatePodSpecForObject func(runtime.Object, func(*v1.PodSpec) error) (bool, error)
 	infos                  []*resource.Info
 	serviceAccountName     string
 }
@@ -148,11 +148,11 @@ func (saConfig *serviceAccountConfig) Complete(f cmdutil.Factory, cmd *cobra.Com
 func (saConfig *serviceAccountConfig) Run() error {
 	patchErrs := []error{}
 	patchFn := func(info *resource.Info) ([]byte, error) {
-		saConfig.updatePodSpecForObject(info.Object, func(podSpec *api.PodSpec) error {
+		saConfig.updatePodSpecForObject(info.VersionedObject, func(podSpec *v1.PodSpec) error {
 			podSpec.ServiceAccountName = saConfig.serviceAccountName
 			return nil
 		})
-		return runtime.Encode(saConfig.encoder, info.Object)
+		return runtime.Encode(saConfig.encoder, info.VersionedObject)
 	}
 	patches := CalculatePatches(saConfig.infos, saConfig.encoder, patchFn)
 	for _, patch := range patches {
@@ -162,7 +162,7 @@ func (saConfig *serviceAccountConfig) Run() error {
 			continue
 		}
 		if saConfig.local || saConfig.dryRun {
-			saConfig.saPrint(patch.Info.Object)
+			saConfig.saPrint(patch.Info.VersionedObject)
 			continue
 		}
 		patched, err := resource.NewHelper(info.Client, info.Mapping).Patch(info.Namespace, info.Name, types.StrategicMergePatchType, patch.Patch)
