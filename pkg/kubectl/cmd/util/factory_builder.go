@@ -127,6 +127,7 @@ func (f *ring2Factory) PrintObject(cmd *cobra.Command, isLocal bool, mapper meta
 	}
 
 	mapping, err := mapper.RESTMapping(gvks[0].GroupKind())
+	fmt.Println(gvks[0].GroupKind(), gvks[0].GroupVersion().Version, gvks)
 	if err != nil {
 		return err
 	}

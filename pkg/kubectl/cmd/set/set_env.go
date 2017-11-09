@@ -29,6 +29,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/kubernetes/pkg/kubectl/cmd/templates"
 	cmdutil "k8s.io/kubernetes/pkg/kubectl/cmd/util"
 	envutil "k8s.io/kubernetes/pkg/kubectl/cmd/util/env"
@@ -215,9 +216,13 @@ func (o *EnvOptions) Complete(f cmdutil.Factory, cmd *cobra.Command, args []stri
 
 // RunEnv contains all the necessary functionality for the OpenShift cli env command
 func (o *EnvOptions) RunEnv(f cmdutil.Factory) error {
-	kubeClient, err := f.KubernetesClientSet()
-	if err != nil {
-		return err
+	var kubeClient *kubernetes.Clientset
+	if o.List {
+		client, err := f.KubernetesClientSet()
+		if err != nil {
+			return err
+		}
+		kubeClient = client
 	}
 
 	cmdNamespace, enforceNamespace, err := f.DefaultNamespace()
@@ -405,7 +410,7 @@ func (o *EnvOptions) RunEnv(f cmdutil.Factory) error {
 		}
 
 		if o.PrintObject != nil && (o.Local || o.DryRun) {
-			if err := o.PrintObject(o.Cmd, o.Local, o.Mapper, info.VersionedObject, o.Out); err != nil {
+			if err := o.PrintObject(o.Cmd, o.Local, o.Mapper, patch.Info.VersionedObject, o.Out); err != nil {
 				return err
 			}
 			continue
@@ -425,7 +430,11 @@ func (o *EnvOptions) RunEnv(f cmdutil.Factory) error {
 		}
 
 		if len(o.Output) > 0 {
-			if err := o.PrintObject(o.Cmd, o.Local, o.Mapper, obj, o.Out); err != nil {
+			versionedObject, err := patch.Info.Mapping.ConvertToVersion(obj, patch.Info.Mapping.GroupVersionKind.GroupVersion())
+			if err != nil {
+				return err
+			}
+			if err := o.PrintObject(o.Cmd, o.Local, o.Mapper, versionedObject, o.Out); err != nil {
 				return err
 			}
 			continue
